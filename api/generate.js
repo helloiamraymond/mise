@@ -53,7 +53,17 @@ OUTPUT FORMAT — respond with ONLY valid JSON, no markdown code fences, no prea
   }
 }
 
-Generate 10-15 roadmap items spanning all three phases, ordered roughly chronologically within each phase. The prep sheet should target the SINGLE most urgent next interaction given the user's stage.`;
+Generate 8-12 roadmap items total spanning all three phases, ordered chronologically within each phase. The prep sheet should target the SINGLE most urgent next interaction given the user's stage.
+
+CONCISION RULES (critical for response speed):
+- Each \`whatItIs\` description: 1-2 short sentences maximum.
+- Each \`warning\`: 1 sentence.
+- Maximum 3 warnings.
+- \`whatGoodLooksLike\` and \`ifItGoesBadly\`: 1-2 sentences each.
+- \`theyWillAsk\` / \`youShouldAsk\`: 4-6 short questions each, no preamble.
+- \`conceptSummary\`: 2 sentences maximum.
+
+Stay tight. The user reads this on a phone — every extra sentence slows them down.`;
 }
 
 export default async function handler(req, res) {
@@ -75,29 +85,34 @@ export default async function handler(req, res) {
     let parsed = null;
     let lastErr = null;
     for (let attempt = 0; attempt < 2; attempt++) {
-      const response = await client.messages.create({
-        model: "claude-opus-4-7",
-        max_tokens: 4096,
-        system: buildSystemPrompt(language),
-        messages: [{ role: "user", content: userMessage }],
-      });
-      const text = response.content[0].text.trim();
       try {
+        console.log(`[generate] attempt ${attempt + 1}: calling Claude (lang=${language})`);
+        const t0 = Date.now();
+        const response = await client.messages.create({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 3072,
+          system: buildSystemPrompt(language),
+          messages: [{ role: "user", content: userMessage }],
+        });
+        console.log(`[generate] response in ${Date.now() - t0}ms`);
+        const text = response.content[0].text.trim();
         const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/, "");
         parsed = JSON.parse(cleaned);
         break;
       } catch (e) {
+        console.error(`[generate] attempt ${attempt + 1} failed:`, e?.message || e);
         lastErr = e;
       }
     }
 
     if (!parsed) {
-      res.status(500).json({ error: "Failed to parse Claude response", detail: String(lastErr) });
+      res.status(500).json({ error: "Failed to generate", detail: String(lastErr?.message || lastErr) });
       return;
     }
 
     res.status(200).json(parsed);
   } catch (err) {
-    res.status(500).json({ error: "Server error", detail: String(err) });
+    console.error("[generate] outer error:", err);
+    res.status(500).json({ error: "Server error", detail: String(err?.message || err) });
   }
 }
