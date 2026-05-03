@@ -89,7 +89,7 @@ export default async function handler(req, res) {
         console.log(`[generate] attempt ${attempt + 1}: calling Claude (lang=${language})`);
         const t0 = Date.now();
         const response = await client.messages.create({
-          model: "claude-haiku-4-5-20251001",
+          model: "claude-sonnet-4-5-20250929",
           max_tokens: 3072,
           system: buildSystemPrompt(language),
           messages: [{ role: "user", content: userMessage }],

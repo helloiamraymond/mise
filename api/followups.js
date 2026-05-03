@@ -60,29 +60,34 @@ export default async function handler(req, res) {
     let parsed = null;
     let lastErr = null;
     for (let attempt = 0; attempt < 2; attempt++) {
-      const response = await client.messages.create({
-        model: "claude-opus-4-7",
-        max_tokens: 1024,
-        system: buildSystemPrompt(language),
-        messages: [{ role: "user", content: userMessage }],
-      });
-      const text = response.content[0].text.trim();
       try {
+        console.log(`[followups] attempt ${attempt + 1} (lang=${language})`);
+        const t0 = Date.now();
+        const response = await client.messages.create({
+          model: "claude-sonnet-4-5-20250929",
+          max_tokens: 1024,
+          system: buildSystemPrompt(language),
+          messages: [{ role: "user", content: userMessage }],
+        });
+        console.log(`[followups] response in ${Date.now() - t0}ms`);
+        const text = response.content[0].text.trim();
         const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/, "");
         parsed = JSON.parse(cleaned);
         break;
       } catch (e) {
+        console.error(`[followups] attempt ${attempt + 1} failed:`, e?.message || e);
         lastErr = e;
       }
     }
 
     if (!parsed) {
-      res.status(500).json({ error: "Failed to parse Claude response", detail: String(lastErr) });
+      res.status(500).json({ error: "Failed to generate follow-ups", detail: String(lastErr?.message || lastErr) });
       return;
     }
 
     res.status(200).json(parsed);
   } catch (err) {
-    res.status(500).json({ error: "Server error", detail: String(err) });
+    console.error("[followups] outer error:", err);
+    res.status(500).json({ error: "Server error", detail: String(err?.message || err) });
   }
 }
