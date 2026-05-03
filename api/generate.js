@@ -4,15 +4,19 @@ import path from "path";
 
 const client = new Anthropic();
 
-let corpus = "";
-try {
-  corpus = fs.readFileSync(
-    path.join(process.cwd(), "corpus", "boston-restaurants.md"),
-    "utf-8"
-  );
-} catch (e) {
-  corpus = "(corpus unavailable)";
+function loadCorpus() {
+  try {
+    const dir = path.join(process.cwd(), "corpus");
+    const files = fs.readdirSync(dir).filter((f) => f.endsWith(".md")).sort();
+    if (!files.length) return "(corpus directory is empty)";
+    return files
+      .map((f) => `\n\n=== FILE: ${f} ===\n\n${fs.readFileSync(path.join(dir, f), "utf-8")}`)
+      .join("");
+  } catch (e) {
+    return "(corpus unavailable)";
+  }
 }
+const corpus = loadCorpus();
 
 function buildSystemPrompt(language) {
   return `You are Mise, a restaurant opening copilot for first-time independent operators in Boston, especially immigrant entrepreneurs. Given a user's full questionnaire (initial answers + adaptive follow-up answers), produce (a) a phased roadmap of permits, licenses, and inspections, and (b) a prep sheet for their next critical bureaucratic interaction.
@@ -91,7 +95,13 @@ export default async function handler(req, res) {
         const response = await client.messages.create({
           model: "claude-sonnet-4-5-20250929",
           max_tokens: 3072,
-          system: buildSystemPrompt(language),
+          system: [
+            {
+              type: "text",
+              text: buildSystemPrompt(language),
+              cache_control: { type: "ephemeral" },
+            },
+          ],
           messages: [{ role: "user", content: userMessage }],
         });
         console.log(`[generate] response in ${Date.now() - t0}ms`);

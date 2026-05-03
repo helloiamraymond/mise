@@ -12,12 +12,28 @@ function show(id) {
   window.scrollTo(0, 0);
 }
 
-function showLoading(text) {
-  $("loading-text").textContent = text;
+let loadingTimer = null;
+function showLoading(messages) {
+  if (typeof messages === "string") messages = [messages];
+  let i = 0;
+  $("loading-text").textContent = messages[0];
   $("loading").classList.remove("hidden");
+  if (loadingTimer) clearInterval(loadingTimer);
+  if (messages.length > 1) {
+    loadingTimer = setInterval(() => {
+      i = (i + 1) % messages.length;
+      $("loading-text").style.opacity = "0";
+      setTimeout(() => {
+        $("loading-text").textContent = messages[i];
+        $("loading-text").style.opacity = "1";
+      }, 250);
+    }, 3500);
+  }
 }
 function hideLoading() {
+  if (loadingTimer) { clearInterval(loadingTimer); loadingTimer = null; }
   $("loading").classList.add("hidden");
+  $("loading-text").style.opacity = "1";
 }
 
 // ---------- Demo loader ----------
@@ -38,7 +54,11 @@ $("form-initial").addEventListener("submit", async (e) => {
   const initialAnswers = Object.fromEntries(fd.entries());
   state.initialAnswers = initialAnswers;
 
-  showLoading("Mise is preparing follow-up questions...");
+  showLoading([
+    "Reviewing your concept...",
+    "Identifying gaps that affect your roadmap...",
+    "Drafting questions specific to your stage...",
+  ]);
   try {
     const res = await fetch("/api/followups", {
       method: "POST",
@@ -83,7 +103,15 @@ $("form-followups").addEventListener("submit", async (e) => {
   const followUpAnswers = Object.fromEntries(fd.entries());
   state.followUpAnswers = followUpAnswers;
 
-  showLoading("Mise is building your roadmap and prep sheet...");
+  showLoading([
+    "Reviewing Boston zoning and licensing requirements...",
+    "Mapping out the Setup phase...",
+    "Building your construction and permit timeline...",
+    "Checking ABCC and beverage license requirements...",
+    "Identifying your most urgent next interaction...",
+    "Drafting your prep sheet in your language...",
+    "Almost there — finalizing your roadmap...",
+  ]);
   try {
     const res = await fetch("/api/generate", {
       method: "POST",
