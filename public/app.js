@@ -1,16 +1,20 @@
 const state = {
   initialAnswers: null,
-  followUpQuestions: [],
+  followUpQuestions: [],     // user-language
+  followUpQuestionsEN: null, // English (for toggle)
   followUpAnswers: {},
-  result: null,        // user-language version
-  resultEN: null,      // English version (for demo toggle)
+  result: null,              // user-language
+  resultEN: null,            // English
   showingEN: false,
+  currentScreen: "screen-1",
 };
 
 const $ = (id) => document.getElementById(id);
 const screens = ["screen-1", "screen-2", "screen-3"];
 function show(id) {
   screens.forEach((s) => $(s).classList.toggle("hidden", s !== id));
+  state.currentScreen = id;
+  updateToggleButton();
   window.scrollTo(0, 0);
 }
 
@@ -61,16 +65,27 @@ $("form-initial").addEventListener("submit", async (e) => {
     "Identifying gaps that affect your roadmap...",
     "Drafting questions specific to your stage...",
   ]);
+
+  const userLang = initialAnswers.language || "English";
+  const callFollowups = (lang) => fetch("/api/followups", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ initialAnswers: { ...initialAnswers, language: lang } }),
+  }).then(async (r) => {
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  });
+
   try {
-    const res = await fetch("/api/followups", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ initialAnswers }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    state.followUpQuestions = data.followUpQuestions || [];
-    renderFollowUps();
+    const calls = [callFollowups(userLang)];
+    if (userLang !== "English") {
+      calls.push(callFollowups("English").catch(() => null));
+    }
+    const [primary, english] = await Promise.all(calls);
+    state.followUpQuestions = primary.followUpQuestions || [];
+    state.followUpQuestionsEN = (english && english.followUpQuestions) || (userLang === "English" ? state.followUpQuestions : null);
+    state.showingEN = false;
+    renderFollowUps(state.followUpQuestions);
     show("screen-2");
   } catch (err) {
     alert("Error generating follow-up questions: " + err.message);
@@ -80,10 +95,10 @@ $("form-initial").addEventListener("submit", async (e) => {
 });
 
 // ---------- Render adaptive follow-ups ----------
-function renderFollowUps() {
+function renderFollowUps(questions) {
   const container = $("followups-container");
   container.innerHTML = "";
-  state.followUpQuestions.forEach((q) => {
+  (questions || state.followUpQuestions).forEach((q) => {
     const block = document.createElement("div");
     let inputHtml = "";
     if (q.inputType === "text") {
@@ -149,14 +164,17 @@ $("form-followups").addEventListener("submit", async (e) => {
   }
 });
 
-// ---------- EN/User-language toggle ----------
+// ---------- EN/User-language toggle (works on screens 2 and 3) ----------
 function updateToggleButton() {
   const btn = $("toggle-lang");
+  if (!btn) return;
   const userLang = state.initialAnswers?.language || "English";
-  if (!state.resultEN || userLang === "English") {
-    btn.classList.add("hidden");
-    return;
-  }
+  if (userLang === "English") { btn.classList.add("hidden"); return; }
+
+  const onScreen2 = state.currentScreen === "screen-2" && state.followUpQuestionsEN;
+  const onScreen3 = state.currentScreen === "screen-3" && state.resultEN;
+  if (!onScreen2 && !onScreen3) { btn.classList.add("hidden"); return; }
+
   btn.classList.remove("hidden");
   const label = btn.querySelector("span");
   if (label) {
@@ -166,14 +184,16 @@ function updateToggleButton() {
 
 document.addEventListener("DOMContentLoaded", () => {
   const btn = $("toggle-lang");
-  if (btn) {
-    btn.addEventListener("click", () => {
-      if (!state.resultEN) return;
-      state.showingEN = !state.showingEN;
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    state.showingEN = !state.showingEN;
+    if (state.currentScreen === "screen-2") {
+      renderFollowUps(state.showingEN ? state.followUpQuestionsEN : state.followUpQuestions);
+    } else if (state.currentScreen === "screen-3") {
       renderResults(state.showingEN ? state.resultEN : state.result);
-      updateToggleButton();
-    });
-  }
+    }
+    updateToggleButton();
+  });
 });
 
 // ---------- Render results ----------
@@ -265,8 +285,11 @@ function escapeHtml(s) {
 $("restart").addEventListener("click", () => {
   state.initialAnswers = null;
   state.followUpQuestions = [];
+  state.followUpQuestionsEN = null;
   state.followUpAnswers = {};
   state.result = null;
+  state.resultEN = null;
+  state.showingEN = false;
   $("form-initial").reset();
   $("form-followups").reset();
   $("lang-indicator").classList.add("hidden");
