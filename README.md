@@ -16,8 +16,10 @@ A web app that helps first-time independent restaurant operators (especially imm
 ```
 npm install
 echo "ANTHROPIC_API_KEY=sk-ant-..." > .env.local
-npx vercel dev
+npm run dev
 ```
+
+Vercel is still useful for deployment, but local development no longer depends on a Vercel login.
 
 ## Deploy
 

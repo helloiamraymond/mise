@@ -2,8 +2,6 @@ import Anthropic from "@anthropic-ai/sdk";
 import fs from "fs";
 import path from "path";
 
-const client = new Anthropic();
-
 let corpus = "";
 try {
   corpus = fs.readFileSync(
@@ -13,6 +11,60 @@ try {
 } catch (e) {
   corpus = "(corpus unavailable)";
 }
+
+function getClient() {
+  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+}
+
+const generateTool = {
+  name: "return_roadmap_and_prep_sheet",
+  description: "Return the phased roadmap and prep sheet for the restaurant-opening workflow.",
+  input_schema: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      detectedLanguage: { type: "string" },
+      conceptSummary: { type: "string" },
+      warnings: {
+        type: "array",
+        items: { type: "string" },
+      },
+      roadmap: {
+        type: "array",
+        minItems: 1,
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            phase: { type: "string", enum: ["Setup", "Build-out", "Pre-opening"] },
+            item: { type: "string" },
+            whatItIs: { type: "string" },
+            fee: { type: "string" },
+            timeline: { type: "string" },
+            agency: { type: "string" },
+          },
+          required: ["phase", "item", "whatItIs", "fee", "timeline", "agency"],
+        },
+      },
+      prepSheet: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          interactionName: { type: "string" },
+          location: { type: "string" },
+          whatToBring: { type: "array", items: { type: "string" } },
+          theyWillAsk: { type: "array", items: { type: "string" } },
+          youShouldAsk: { type: "array", items: { type: "string" } },
+          keyTermsEnglish: { type: "array", items: { type: "string" } },
+          whatGoodLooksLike: { type: "string" },
+          ifItGoesBadly: { type: "string" },
+        },
+        required: ["interactionName", "location", "whatToBring", "theyWillAsk", "youShouldAsk", "keyTermsEnglish", "whatGoodLooksLike", "ifItGoesBadly"],
+      },
+    },
+    required: ["detectedLanguage", "conceptSummary", "warnings", "roadmap", "prepSheet"],
+  },
+};
 
 function buildSystemPrompt(language) {
   return `You are Mise, a restaurant opening copilot for first-time independent operators in Boston, especially immigrant entrepreneurs. Given a user's full questionnaire (initial answers + adaptive follow-up answers), produce (a) a phased roadmap of permits, licenses, and inspections, and (b) a prep sheet for their next critical bureaucratic interaction.
@@ -25,33 +77,6 @@ ${corpus}
 """
 
 LANGUAGE: Write \`conceptSummary\`, \`warnings\`, \`whatItIs\`, \`theyWillAsk\`, \`youShouldAsk\`, \`whatGoodLooksLike\`, \`ifItGoesBadly\` in ${language}. Keep \`item\`, \`agency\`, \`interactionName\`, \`location\`, \`whatToBring\`, \`keyTermsEnglish\` in English (these are official names the user must recognize in real conversations). \`phase\` must be exactly one of: "Setup", "Build-out", "Pre-opening".
-
-OUTPUT FORMAT — respond with ONLY valid JSON, no markdown code fences, no preamble, no explanation. Match this exact shape:
-{
-  "detectedLanguage": "${language}",
-  "conceptSummary": "string in ${language}",
-  "warnings": ["string in ${language}"],
-  "roadmap": [
-    {
-      "phase": "Setup" | "Build-out" | "Pre-opening",
-      "item": "official English name",
-      "whatItIs": "plain-language description in ${language}",
-      "fee": "string",
-      "timeline": "string",
-      "agency": "official agency name in English"
-    }
-  ],
-  "prepSheet": {
-    "interactionName": "official English name of the next critical interaction",
-    "location": "where it happens (English)",
-    "whatToBring": ["item names in English"],
-    "theyWillAsk": ["question in ${language}"],
-    "youShouldAsk": ["question in ${language}"],
-    "keyTermsEnglish": ["official term 1", "official term 2"],
-    "whatGoodLooksLike": "string in ${language}",
-    "ifItGoesBadly": "string in ${language}"
-  }
-}
 
 Generate 10-15 roadmap items spanning all three phases, ordered roughly chronologically within each phase. The prep sheet should target the SINGLE most urgent next interaction given the user's stage.`;
 }
@@ -71,32 +96,25 @@ export default async function handler(req, res) {
 
     const language = initialAnswers.language || "English";
     const userMessage = `Initial answers:\n${JSON.stringify(initialAnswers, null, 2)}\n\nFollow-up answers:\n${JSON.stringify(followUpAnswers || {}, null, 2)}\n\nProduce the roadmap and prep sheet as specified. Respond in ${language}.`;
+    const client = getClient();
 
-    let parsed = null;
-    let lastErr = null;
     for (let attempt = 0; attempt < 2; attempt++) {
       const response = await client.messages.create({
         model: "claude-opus-4-7",
         max_tokens: 4096,
         system: buildSystemPrompt(language),
         messages: [{ role: "user", content: userMessage }],
+        tools: [generateTool],
+        tool_choice: { type: "tool", name: "return_roadmap_and_prep_sheet" },
       });
-      const text = response.content[0].text.trim();
-      try {
-        const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/, "");
-        parsed = JSON.parse(cleaned);
-        break;
-      } catch (e) {
-        lastErr = e;
+      const toolUse = response.content.find((block) => block.type === "tool_use" && block.name === "return_roadmap_and_prep_sheet");
+      if (toolUse?.input?.roadmap?.length && toolUse?.input?.prepSheet) {
+        res.status(200).json(toolUse.input);
+        return;
       }
     }
 
-    if (!parsed) {
-      res.status(500).json({ error: "Failed to parse Claude response", detail: String(lastErr) });
-      return;
-    }
-
-    res.status(200).json(parsed);
+    res.status(500).json({ error: "Claude returned an invalid roadmap payload" });
   } catch (err) {
     res.status(500).json({ error: "Server error", detail: String(err) });
   }

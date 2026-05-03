@@ -25,9 +25,20 @@
   <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
     <div class="flex items-baseline gap-3">
       <h1 class="font-serif-display text-3xl font-bold text-emerald-900">Mise</h1>
-      <span class="text-sm text-stone-500 italic hidden sm:inline">Boston restaurant opening copilot</span>
+      <span class="text-sm text-stone-500 italic hidden sm:inline" data-i18n="app.subtitle">Boston restaurant opening copilot</span>
     </div>
-    <span id="lang-indicator" class="text-xs text-stone-500 hidden"></span>
+    <div class="flex items-center gap-2">
+      <label for="language-selector" class="text-xs font-semibold uppercase tracking-wide text-stone-500" data-i18n="header.language">Response language</label>
+      <select id="language-selector" class="rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-700 focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 outline-none">
+        <option value="English">English</option>
+        <option value="Spanish">Español</option>
+        <option value="Vietnamese">Tiếng Việt</option>
+        <option value="Mandarin">中文（普通话）</option>
+        <option value="Haitian Creole">Kreyòl Ayisyen</option>
+        <option value="Cantonese">廣東話</option>
+        <option value="Portuguese">Português</option>
+      </select>
+    </div>
   </div>
 </header>
 
@@ -36,113 +47,105 @@
   <!-- ============ SCREEN 1: INITIAL QUESTIONNAIRE ============ -->
   <section id="screen-1" class="screen">
     <div class="text-center mb-10">
-      <h2 class="font-serif-display text-4xl font-bold text-stone-900 mb-3">Tell us about your restaurant.</h2>
-      <p class="text-stone-600 max-w-2xl mx-auto">Mise will guide you through Boston's permits, licenses, and inspections — in your language.</p>
-      <button id="load-demo" class="mt-5 text-sm text-emerald-800 underline underline-offset-4 hover:text-emerald-900">Load demo (Phở · Dorchester)</button>
+      <h2 class="font-serif-display text-4xl font-bold text-stone-900 mb-3" data-i18n="screen1.title">Tell us about your restaurant.</h2>
+      <p class="text-stone-600 max-w-2xl mx-auto" data-i18n="screen1.description">Mise will guide you through Boston's permits, licenses, and inspections — in your language.</p>
+      <button id="load-demo" class="mt-5 text-sm text-emerald-800 underline underline-offset-4 hover:text-emerald-900" data-i18n="screen1.demo">Load demo (Phở · Dorchester)</button>
     </div>
 
     <form id="form-initial" class="menu-card rounded-2xl shadow-sm border border-stone-200 p-8 space-y-6 max-w-2xl mx-auto">
+      <input type="hidden" name="language" id="language-input" value="English" />
 
       <div>
-        <label class="block text-sm font-semibold text-stone-700 mb-2">What kind of food will you serve?</label>
-        <input type="text" name="cuisine" required placeholder="e.g. Vietnamese pho" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 outline-none" />
+        <label class="block text-sm font-semibold text-stone-700 mb-2" data-i18n="form.cuisine.label">What kind of food will you serve?</label>
+        <input type="text" name="cuisine" required placeholder="e.g. Vietnamese pho" data-i18n-placeholder="form.cuisine.placeholder" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 outline-none" />
       </div>
 
       <div>
-        <label class="block text-sm font-semibold text-stone-700 mb-2">Where in Boston?</label>
+        <label class="block text-sm font-semibold text-stone-700 mb-2" data-i18n="form.neighborhood.label">Where in Boston?</label>
         <select name="neighborhood" required class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 outline-none">
-          <option value="">Choose a neighborhood</option>
+          <option value="" data-i18n="form.neighborhood.placeholder">Choose a neighborhood</option>
           <option>Allston/Brighton</option><option>Back Bay</option><option>Charlestown</option>
           <option>Chinatown</option><option>Dorchester</option><option>East Boston</option>
           <option>Fenway</option><option>Hyde Park</option><option>Jamaica Plain</option>
           <option>Mattapan</option><option>Mission Hill</option><option>North End</option>
           <option>Roslindale</option><option>Roxbury</option><option>South Boston</option>
-          <option>South End</option><option>West Roxbury</option><option>Other</option>
+          <option>South End</option><option>West Roxbury</option><option data-i18n="form.neighborhood.other">Other</option>
         </select>
       </div>
 
       <div>
-        <label class="block text-sm font-semibold text-stone-700 mb-2">How many seats?</label>
+        <label class="block text-sm font-semibold text-stone-700 mb-2" data-i18n="form.seats.label">How many seats?</label>
         <select name="seats" required class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 outline-none">
-          <option value="">Choose</option>
-          <option>Takeout only</option><option>1-20</option><option>21-50</option>
+          <option value="" data-i18n="common.choose">Choose</option>
+          <option value="Takeout only" data-i18n="form.seats.takeout">Takeout only</option><option>1-20</option><option>21-50</option>
           <option>51-100</option><option>100+</option>
         </select>
       </div>
 
       <div>
-        <label class="block text-sm font-semibold text-stone-700 mb-2">Will you serve alcohol?</label>
+        <label class="block text-sm font-semibold text-stone-700 mb-2" data-i18n="form.alcohol.label">Will you serve alcohol?</label>
         <div class="space-y-2">
-          <label class="flex items-center gap-2"><input type="radio" name="alcohol" value="No" required class="text-emerald-700" /> No</label>
-          <label class="flex items-center gap-2"><input type="radio" name="alcohol" value="Beer & wine only" class="text-emerald-700" /> Beer & wine only</label>
-          <label class="flex items-center gap-2"><input type="radio" name="alcohol" value="Full liquor" class="text-emerald-700" /> Full liquor</label>
+          <label class="flex items-center gap-2"><input type="radio" name="alcohol" value="No" required class="text-emerald-700" /> <span data-i18n="form.alcohol.no">No</span></label>
+          <label class="flex items-center gap-2"><input type="radio" name="alcohol" value="Beer & wine only" class="text-emerald-700" /> <span data-i18n="form.alcohol.beerWine">Beer & wine only</span></label>
+          <label class="flex items-center gap-2"><input type="radio" name="alcohol" value="Full liquor" class="text-emerald-700" /> <span data-i18n="form.alcohol.fullLiquor">Full liquor</span></label>
         </div>
       </div>
 
       <div>
-        <label class="block text-sm font-semibold text-stone-700 mb-2">Where are you in the process?</label>
+        <label class="block text-sm font-semibold text-stone-700 mb-2" data-i18n="form.stage.label">Where are you in the process?</label>
         <div class="space-y-2">
-          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Still looking at spaces" required class="text-emerald-700" /> Still looking at spaces</label>
-          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Have a space identified" class="text-emerald-700" /> Have a space identified</label>
-          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Lease signed" class="text-emerald-700" /> Lease signed</label>
-          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Build-out in progress" class="text-emerald-700" /> Build-out in progress</label>
-          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Build-out complete" class="text-emerald-700" /> Build-out complete</label>
+          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Still looking at spaces" required class="text-emerald-700" /> <span data-i18n="form.stage.looking">Still looking at spaces</span></label>
+          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Have a space identified" class="text-emerald-700" /> <span data-i18n="form.stage.identified">Have a space identified</span></label>
+          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Lease signed" class="text-emerald-700" /> <span data-i18n="form.stage.lease">Lease signed</span></label>
+          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Build-out in progress" class="text-emerald-700" /> <span data-i18n="form.stage.building">Build-out in progress</span></label>
+          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Build-out complete" class="text-emerald-700" /> <span data-i18n="form.stage.complete">Build-out complete</span></label>
         </div>
       </div>
 
-      <div>
-        <label class="block text-sm font-semibold text-stone-700 mb-2">What language do you want responses in?</label>
-        <select name="language" required class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 outline-none">
-          <option>English</option><option>Spanish</option><option>Vietnamese</option>
-          <option>Mandarin</option><option>Haitian Creole</option><option>Cantonese</option>
-          <option>Portuguese</option>
-        </select>
-      </div>
-
-      <button type="submit" class="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-semibold py-3 rounded-lg transition">Continue →</button>
+      <button type="submit" class="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-semibold py-3 rounded-lg transition" data-i18n="screen1.submit">Continue →</button>
     </form>
   </section>
 
   <!-- ============ SCREEN 2: ADAPTIVE FOLLOW-UPS ============ -->
   <section id="screen-2" class="screen hidden">
     <div class="text-center mb-8">
-      <h2 class="font-serif-display text-3xl font-bold text-stone-900 mb-2">A few more questions.</h2>
-      <p class="text-stone-600">These are tailored to your concept.</p>
+      <h2 class="font-serif-display text-3xl font-bold text-stone-900 mb-2" data-i18n="screen2.title">A few more questions.</h2>
+      <p class="text-stone-600" data-i18n="screen2.description">These are tailored to your concept.</p>
     </div>
     <form id="form-followups" class="menu-card rounded-2xl shadow-sm border border-stone-200 p-8 space-y-6 max-w-2xl mx-auto">
       <div id="followups-container" class="space-y-6"></div>
-      <button type="submit" class="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-semibold py-3 rounded-lg transition">Generate my roadmap →</button>
+      <button type="submit" class="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-semibold py-3 rounded-lg transition" data-i18n="screen2.submit">Generate my roadmap →</button>
     </form>
   </section>
 
   <!-- ============ SCREEN 3: RESULTS ============ -->
   <section id="screen-3" class="screen hidden">
     <div id="warnings-banner" class="hidden bg-amber-100 border border-amber-300 text-amber-900 rounded-lg p-4 mb-6">
-      <div class="font-semibold mb-1">⚠ Heads up</div>
+      <div class="font-semibold mb-1" data-i18n="screen3.warningTitle">⚠ Heads up</div>
       <ul id="warnings-list" class="list-disc pl-5 space-y-1 text-sm"></ul>
     </div>
 
     <div id="concept-summary" class="mb-8 text-center">
-      <h2 class="font-serif-display text-3xl font-bold text-stone-900 mb-2">Your roadmap</h2>
+      <h2 class="font-serif-display text-3xl font-bold text-stone-900 mb-2" data-i18n="screen3.title">Your roadmap</h2>
       <p id="concept-summary-text" class="text-stone-600 max-w-2xl mx-auto italic"></p>
     </div>
 
     <div class="grid lg:grid-cols-2 gap-8">
       <!-- Roadmap -->
       <div>
-        <h3 class="font-serif-display text-2xl font-semibold text-emerald-900 mb-4">Roadmap</h3>
+        <h3 class="font-serif-display text-2xl font-semibold text-emerald-900 mb-4" data-i18n="screen3.roadmap">Roadmap</h3>
         <div id="roadmap-container" class="space-y-6"></div>
       </div>
 
       <!-- Prep sheet -->
       <div>
-        <h3 class="font-serif-display text-2xl font-semibold text-emerald-900 mb-4">Your next step: prep sheet</h3>
+        <h3 class="font-serif-display text-2xl font-semibold text-emerald-900 mb-4" data-i18n="screen3.prep">Your next step: prep sheet</h3>
         <div id="prep-container" class="menu-card border border-stone-200 rounded-xl p-6 space-y-5 shadow-sm"></div>
       </div>
     </div>
 
     <div class="text-center mt-10">
-      <button id="restart" class="text-sm text-emerald-800 underline underline-offset-4 hover:text-emerald-900">Start over</button>
+      <button id="restart" class="text-sm text-emerald-800 underline underline-offset-4 hover:text-emerald-900" data-i18n="screen3.restart">Start over</button>
     </div>
   </section>
 
@@ -150,13 +153,13 @@
   <div id="loading" class="hidden fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-20 flex items-center justify-center">
     <div class="bg-white rounded-2xl p-8 max-w-sm mx-4 text-center shadow-xl">
       <div class="spinner mx-auto mb-4"></div>
-      <p id="loading-text" class="text-stone-700 font-medium">Mise is reviewing Boston requirements for your concept...</p>
+      <p id="loading-text" class="text-stone-700 font-medium" data-i18n="loading.default">Mise is reviewing Boston requirements for your concept...</p>
     </div>
   </div>
 
 </main>
 
-<footer class="text-center text-xs text-stone-400 py-6">
+<footer class="text-center text-xs text-stone-400 py-6" data-i18n="footer.note">
   Built for the Claude Builder Club Spring 2026 Hackathon · MIT
 </footer>
 
