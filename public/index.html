@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mise — Boston Restaurant Opening Copilot</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  .font-serif-display { font-family: 'Fraunces', Georgia, serif; }
+  .menu-card { background-image: linear-gradient(180deg, #fffaf0 0%, #fdf6e3 100%); }
+  .spinner { border: 3px solid #f5e6c8; border-top-color: #065f46; border-radius: 50%; width: 28px; height: 28px; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .phase-setup { border-left: 4px solid #065f46; }
+  .phase-buildout { border-left: 4px solid #b45309; }
+  .phase-preopening { border-left: 4px solid #7f1d1d; }
+</style>
+</head>
+<body class="bg-amber-50 text-stone-800 min-h-screen">
+
+<header class="border-b border-stone-200 bg-stone-50/60 backdrop-blur sticky top-0 z-10">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="flex items-baseline gap-3">
+      <h1 class="font-serif-display text-3xl font-bold text-emerald-900">Mise</h1>
+      <span class="text-sm text-stone-500 italic hidden sm:inline">Boston restaurant opening copilot</span>
+    </div>
+    <span id="lang-indicator" class="text-xs text-stone-500 hidden"></span>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-6 py-10">
+
+  <!-- ============ SCREEN 1: INITIAL QUESTIONNAIRE ============ -->
+  <section id="screen-1" class="screen">
+    <div class="text-center mb-10">
+      <h2 class="font-serif-display text-4xl font-bold text-stone-900 mb-3">Tell us about your restaurant.</h2>
+      <p class="text-stone-600 max-w-2xl mx-auto">Mise will guide you through Boston's permits, licenses, and inspections — in your language.</p>
+      <button id="load-demo" class="mt-5 text-sm text-emerald-800 underline underline-offset-4 hover:text-emerald-900">Load demo (Phở · Dorchester)</button>
+    </div>
+
+    <form id="form-initial" class="menu-card rounded-2xl shadow-sm border border-stone-200 p-8 space-y-6 max-w-2xl mx-auto">
+
+      <div>
+        <label class="block text-sm font-semibold text-stone-700 mb-2">What kind of food will you serve?</label>
+        <input type="text" name="cuisine" required placeholder="e.g. Vietnamese pho" class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 outline-none" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-stone-700 mb-2">Where in Boston?</label>
+        <select name="neighborhood" required class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 outline-none">
+          <option value="">Choose a neighborhood</option>
+          <option>Allston/Brighton</option><option>Back Bay</option><option>Charlestown</option>
+          <option>Chinatown</option><option>Dorchester</option><option>East Boston</option>
+          <option>Fenway</option><option>Hyde Park</option><option>Jamaica Plain</option>
+          <option>Mattapan</option><option>Mission Hill</option><option>North End</option>
+          <option>Roslindale</option><option>Roxbury</option><option>South Boston</option>
+          <option>South End</option><option>West Roxbury</option><option>Other</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-stone-700 mb-2">How many seats?</label>
+        <select name="seats" required class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 outline-none">
+          <option value="">Choose</option>
+          <option>Takeout only</option><option>1-20</option><option>21-50</option>
+          <option>51-100</option><option>100+</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-stone-700 mb-2">Will you serve alcohol?</label>
+        <div class="space-y-2">
+          <label class="flex items-center gap-2"><input type="radio" name="alcohol" value="No" required class="text-emerald-700" /> No</label>
+          <label class="flex items-center gap-2"><input type="radio" name="alcohol" value="Beer & wine only" class="text-emerald-700" /> Beer & wine only</label>
+          <label class="flex items-center gap-2"><input type="radio" name="alcohol" value="Full liquor" class="text-emerald-700" /> Full liquor</label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-stone-700 mb-2">Where are you in the process?</label>
+        <div class="space-y-2">
+          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Still looking at spaces" required class="text-emerald-700" /> Still looking at spaces</label>
+          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Have a space identified" class="text-emerald-700" /> Have a space identified</label>
+          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Lease signed" class="text-emerald-700" /> Lease signed</label>
+          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Build-out in progress" class="text-emerald-700" /> Build-out in progress</label>
+          <label class="flex items-center gap-2"><input type="radio" name="stage" value="Build-out complete" class="text-emerald-700" /> Build-out complete</label>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-stone-700 mb-2">What language do you want responses in?</label>
+        <select name="language" required class="w-full rounded-lg border border-stone-300 bg-white px-4 py-2.5 focus:ring-2 focus:ring-emerald-700 focus:border-emerald-700 outline-none">
+          <option>English</option><option>Spanish</option><option>Vietnamese</option>
+          <option>Mandarin</option><option>Haitian Creole</option><option>Cantonese</option>
+          <option>Portuguese</option>
+        </select>
+      </div>
+
+      <button type="submit" class="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-semibold py-3 rounded-lg transition">Continue →</button>
+    </form>
+  </section>
+
+  <!-- ============ SCREEN 2: ADAPTIVE FOLLOW-UPS ============ -->
+  <section id="screen-2" class="screen hidden">
+    <div class="text-center mb-8">
+      <h2 class="font-serif-display text-3xl font-bold text-stone-900 mb-2">A few more questions.</h2>
+      <p class="text-stone-600">These are tailored to your concept.</p>
+    </div>
+    <form id="form-followups" class="menu-card rounded-2xl shadow-sm border border-stone-200 p-8 space-y-6 max-w-2xl mx-auto">
+      <div id="followups-container" class="space-y-6"></div>
+      <button type="submit" class="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-semibold py-3 rounded-lg transition">Generate my roadmap →</button>
+    </form>
+  </section>
+
+  <!-- ============ SCREEN 3: RESULTS ============ -->
+  <section id="screen-3" class="screen hidden">
+    <div id="warnings-banner" class="hidden bg-amber-100 border border-amber-300 text-amber-900 rounded-lg p-4 mb-6">
+      <div class="font-semibold mb-1">⚠ Heads up</div>
+      <ul id="warnings-list" class="list-disc pl-5 space-y-1 text-sm"></ul>
+    </div>
+
+    <div id="concept-summary" class="mb-8 text-center">
+      <h2 class="font-serif-display text-3xl font-bold text-stone-900 mb-2">Your roadmap</h2>
+      <p id="concept-summary-text" class="text-stone-600 max-w-2xl mx-auto italic"></p>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8">
+      <!-- Roadmap -->
+      <div>
+        <h3 class="font-serif-display text-2xl font-semibold text-emerald-900 mb-4">Roadmap</h3>
+        <div id="roadmap-container" class="space-y-6"></div>
+      </div>
+
+      <!-- Prep sheet -->
+      <div>
+        <h3 class="font-serif-display text-2xl font-semibold text-emerald-900 mb-4">Your next step: prep sheet</h3>
+        <div id="prep-container" class="menu-card border border-stone-200 rounded-xl p-6 space-y-5 shadow-sm"></div>
+      </div>
+    </div>
+
+    <div class="text-center mt-10">
+      <button id="restart" class="text-sm text-emerald-800 underline underline-offset-4 hover:text-emerald-900">Start over</button>
+    </div>
+  </section>
+
+  <!-- ============ LOADING OVERLAY ============ -->
+  <div id="loading" class="hidden fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-20 flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-8 max-w-sm mx-4 text-center shadow-xl">
+      <div class="spinner mx-auto mb-4"></div>
+      <p id="loading-text" class="text-stone-700 font-medium">Mise is reviewing Boston requirements for your concept...</p>
+    </div>
+  </div>
+
+</main>
+
+<footer class="text-center text-xs text-stone-400 py-6">
+  Built for the Claude Builder Club Spring 2026 Hackathon · MIT
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
