@@ -2,7 +2,9 @@ const state = {
   initialAnswers: null,
   followUpQuestions: [],
   followUpAnswers: {},
-  result: null,
+  result: null,        // user-language version
+  resultEN: null,      // English version (for demo toggle)
+  showingEN: false,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -112,24 +114,65 @@ $("form-followups").addEventListener("submit", async (e) => {
     "Drafting your prep sheet in your language...",
     "Almost there — finalizing your roadmap...",
   ]);
+
+  const userLang = state.initialAnswers.language || "English";
+  const callGenerate = (lang) => fetch("/api/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      initialAnswers: { ...state.initialAnswers, language: lang },
+      followUpAnswers,
+    }),
+  }).then(async (r) => {
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  });
+
   try {
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        initialAnswers: state.initialAnswers,
-        followUpAnswers,
-      }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    state.result = data;
-    renderResults(data);
+    const calls = [callGenerate(userLang)];
+    if (userLang !== "English") {
+      // Fire English version in parallel for the demo toggle. If it fails,
+      // we silently hide the toggle — the main flow still works.
+      calls.push(callGenerate("English").catch(() => null));
+    }
+    const [primary, english] = await Promise.all(calls);
+    state.result = primary;
+    state.resultEN = english || (userLang === "English" ? primary : null);
+    state.showingEN = false;
+    renderResults(primary);
+    updateToggleButton();
     show("screen-3");
   } catch (err) {
     alert("Error generating roadmap: " + err.message);
   } finally {
     hideLoading();
+  }
+});
+
+// ---------- EN/User-language toggle ----------
+function updateToggleButton() {
+  const btn = $("toggle-lang");
+  const userLang = state.initialAnswers?.language || "English";
+  if (!state.resultEN || userLang === "English") {
+    btn.classList.add("hidden");
+    return;
+  }
+  btn.classList.remove("hidden");
+  const label = btn.querySelector("span");
+  if (label) {
+    label.textContent = state.showingEN ? `Show in ${userLang}` : "Show in English";
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = $("toggle-lang");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      if (!state.resultEN) return;
+      state.showingEN = !state.showingEN;
+      renderResults(state.showingEN ? state.resultEN : state.result);
+      updateToggleButton();
+    });
   }
 });
 
